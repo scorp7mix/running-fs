@@ -1,0 +1,26 @@
+{
+  "name": "pr-of-it/running-fs",
+  "description": "Running.FM FileSystem Library",
+  "keywords": ["running", "running.fm", "framework", "file", "folder"],
+  "type": "library",
+  "license": "LGPL v.3",
+  "authors": [
+    {
+      "name": "Albert Stepantsev"
+    }
+  ],
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "require": {
+    "php": ">=7.0",
+    "pr-of-it/running-core": "*"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "5.*"
+  },
+  "autoload": {
+    "psr-4": {
+      "Running\\": "src/"
+    }
+  }
+}
