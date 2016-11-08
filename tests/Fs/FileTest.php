@@ -14,6 +14,7 @@ class FileTest extends \PHPUnit_Framework_TestCase
         mkdir(self::TMP_PATH, 0777);
         mkdir(self::TMP_PATH . '/test.dir', 0777);
         file_put_contents(self::TMP_PATH . '/contents.txt', 'Hello, world!');
+        symlink(self::TMP_PATH . '/contents.txt', self::TMP_PATH . '/contents.lnk');
     }
 
     public function testConstruct()
@@ -103,8 +104,38 @@ class FileTest extends \PHPUnit_Framework_TestCase
         $this->assertFalse($file->isDir());
     }
 
+    /**
+     * @expectedException \Running\Fs\Exception
+     * @expectedExceptionCode 1
+     */
+    public function testIsLinkEmpty()
+    {
+        $file = new File();
+        $this->assertFalse($file->isLink());
+    }
+
+    /**
+     * @expectedException \Running\Fs\Exception
+     * @expectedExceptionCode 2
+     */
+    public function testIsLinkNotExists()
+    {
+        $file = new File(self::TMP_PATH . '/not.exists');
+        $this->assertFalse($file->isLink());
+    }
+
+    public function testIsLink()
+    {
+        $file = new File(self::TMP_PATH . '/contents.lnk');
+        $this->assertTrue($file->isLink());
+
+        $file = new File(self::TMP_PATH . '/contents.txt');
+        $this->assertFalse($file->isLink());
+    }
+
     protected function tearDown()
     {
+        unlink(self::TMP_PATH . '/contents.lnk');
         unlink(self::TMP_PATH . '/contents.txt');
         rmdir(self::TMP_PATH . '/test.dir');
         rmdir(self::TMP_PATH);
