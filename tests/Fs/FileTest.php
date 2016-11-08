@@ -2,6 +2,7 @@
 
 namespace Running\tests\Fs\File;
 
+use Running\Fs\Exception;
 use Running\Fs\File;
 
 class FileTest extends \PHPUnit_Framework_TestCase
@@ -14,6 +15,12 @@ class FileTest extends \PHPUnit_Framework_TestCase
         mkdir(self::TMP_PATH, 0777);
         mkdir(self::TMP_PATH . '/test.dir', 0777);
         file_put_contents(self::TMP_PATH . '/contents.txt', 'Hello, world!');
+        if (PHP_OS != 'WINNT') {
+            file_put_contents(self::TMP_PATH . '/not.readable.txt', 'Hello, not readable file!');
+            chmod(self::TMP_PATH . '/not.readable.txt', 0000);
+            file_put_contents(self::TMP_PATH . '/not.writable.txt', 'Hello, not writable file!');
+            chmod(self::TMP_PATH . '/not.writable.txt', 0000);
+        }
         symlink(self::TMP_PATH . '/contents.txt', self::TMP_PATH . '/contents.lnk');
     }
 
@@ -133,9 +140,122 @@ class FileTest extends \PHPUnit_Framework_TestCase
         $this->assertFalse($file->isLink());
     }
 
+    /**
+     * @expectedException \Running\Fs\Exception
+     * @expectedExceptionCode 1
+     */
+    public function testLoadEmpty()
+    {
+        $file = new File();
+        $file->load();
+        $this->assertTrue(false);
+    }
+
+    /**
+     * @expectedException \Running\Fs\Exception
+     * @expectedExceptionCode 2
+     */
+    public function testLoadNotExists()
+    {
+        $file = new File(self::TMP_PATH . '/not.exists');
+        $file->load();
+        $this->assertTrue(false);
+    }
+
+    public function testLoadNotReadable()
+    {
+        if (PHP_OS != 'WINNT') {
+            try {
+                $file = new File(self::TMP_PATH . '/not.readable.txt');
+                $file->load();
+                $this->assertTrue(false);
+            } catch (Exception $e) {
+                $this->assertEquals(3, $e->getCode());
+            }
+        }
+    }
+
+    /**
+     * @expectedException \Running\Fs\Exception
+     * @expectedExceptionCode 5
+     */
+    public function testLoadIsDir()
+    {
+        $file = new File(self::TMP_PATH . '/test.dir');
+        $file->load();
+        $this->assertTrue(false);
+    }
+
+    public function testLoad()
+    {
+        $file = new File(self::TMP_PATH . '/contents.txt');
+        $file->load();
+        $this->assertEquals('Hello, world!', $file->getContents());
+    }
+
+    /**
+     * @expectedException \Running\Fs\Exception
+     * @expectedExceptionCode 1
+     */
+    public function testSaveEmpty()
+    {
+        $file = new File();
+        $file->save();
+        $this->assertTrue(false);
+    }
+
+    /**
+     * @expectedException \Running\Fs\Exception
+     * @expectedExceptionCode 2
+     */
+    public function testSaveNotExists()
+    {
+        $file = new File(self::TMP_PATH . '/not.exists');
+        $file->save();
+        $this->assertTrue(false);
+    }
+
+    public function testSaveNotWriteable()
+    {
+        if (PHP_OS != 'WINNT') {
+            try {
+                $file = new File(self::TMP_PATH . '/not.writable.txt');
+                $file->save();
+                $this->assertTrue(false);
+            } catch (Exception $e) {
+                $this->assertEquals(4, $e->getCode());
+            }
+        }
+    }
+
+    /**
+     * @expectedException \Running\Fs\Exception
+     * @expectedExceptionCode 5
+     */
+    public function testSaveIsDir()
+    {
+        $file = new File(self::TMP_PATH . '/test.dir');
+        $file->save();
+        $this->assertTrue(false);
+    }
+
+    public function testSave()
+    {
+        $file = new File(self::TMP_PATH . '/contents.txt');
+        $file->setContents('Written!');
+        $file->save();
+        $this->assertEquals('Written!', file_get_contents(self::TMP_PATH . '/contents.txt'));
+    }
+
     protected function tearDown()
     {
         unlink(self::TMP_PATH . '/contents.lnk');
+        if (PHP_OS != 'WINNT') {
+            chmod(self::TMP_PATH . '/not.writable.txt', 0777);
+            unlink(self::TMP_PATH . '/not.writable.txt');
+            chmod(self::TMP_PATH . '/not.readable.txt', 0777);
+            unlink(self::TMP_PATH . '/not.readable.txt');
+        }
         unlink(self::TMP_PATH . '/contents.txt');
         rmdir(self::TMP_PATH . '/test.dir');
         rmdir(self::TMP_PATH);
