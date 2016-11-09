@@ -141,6 +141,27 @@ class File
     }
 
     /**
+     * @return mixed
+     * @throws \Running\Fs\Exception
+     */
+    public function return()
+    {
+        if (empty($this->path)) {
+            throw new Exception('Empty file path', self::ERRORS['EMPTY_PATH']);
+        }
+        if (!file_exists($this->path)) {
+            throw new Exception('File does not exists', self::ERRORS['FILE_NOT_EXISTS']);
+        }
+        if ($this->isDir()) {
+            throw new Exception('Path is dir instead of file', self::ERRORS['FILE_IS_DIR']);
+        }
+        if (!is_readable($this->path)) {
+            throw new Exception('File is not readable', self::ERRORS['FILE_NOT_READABLE']);
+        }
+        return include $this->path;
+    }
+
+    /**
      * @return $this
      * @throws \Running\Fs\Exception
      */

@@ -22,6 +22,7 @@ class FileTest extends \PHPUnit_Framework_TestCase
             chmod(self::TMP_PATH . '/not.writable.txt', 0000);
         }
         symlink(self::TMP_PATH . '/contents.txt', self::TMP_PATH . '/contents.lnk');
+        file_put_contents(self::TMP_PATH . '/return.php', '<?php return 42;');
     }
 
     public function testConstruct()
@@ -247,8 +248,61 @@ class FileTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('Written!', file_get_contents(self::TMP_PATH . '/contents.txt'));
     }
 
+    /**
+     * @expectedException \Running\Fs\Exception
+     * @expectedExceptionCode 1
+     */
+    public function testReturnEmpty()
+    {
+        $file = new File();
+        $file->return();
+        $this->assertTrue(false);
+    }
+
+    /**
+     * @expectedException \Running\Fs\Exception
+     * @expectedExceptionCode 2
+     */
+    public function testReturnNotExists()
+    {
+        $file = new File(self::TMP_PATH . '/not.exists');
+        $file->return();
+        $this->assertTrue(false);
+    }
+
+    public function testReturnNotReadable()
+    {
+        if (PHP_OS != 'WINNT') {
+            try {
+                $file = new File(self::TMP_PATH . '/not.readable.txt');
+                $file->return();
+                $this->assertTrue(false);
+            } catch (Exception $e) {
+                $this->assertEquals(3, $e->getCode());
+            }
+        }
+    }
+
+    /**
+     * @expectedException \Running\Fs\Exception
+     * @expectedExceptionCode 5
+     */
+    public function testReturnIsDir()
+    {
+        $file = new File(self::TMP_PATH . '/test.dir');
+        $file->return();
+        $this->assertTrue(false);
+    }
+
+    public function testReturn()
+    {
+        $file = new File(self::TMP_PATH . '/return.php');
+        $this->assertEquals(42, $file->return());
+    }
+
     protected function tearDown()
     {
+        unlink(self::TMP_PATH . '/return.php');
         unlink(self::TMP_PATH . '/contents.lnk');
         if (PHP_OS != 'WINNT') {
             chmod(self::TMP_PATH . '/not.writable.txt', 0777);
