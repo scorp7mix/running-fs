@@ -45,7 +45,7 @@ class DirTest extends \PHPUnit_Framework_TestCase
      */
     public function testMakeWithIncorrectPath()
     {
-        $dir = new Dir(self::TMP_PATH . '/test".dir');
+        $dir = new Dir(self::TMP_PATH . '/test1.txt');
         $dir->make();
     }
 
