@@ -33,6 +33,7 @@ class DirTest extends \PHPUnit_Framework_TestCase
         $dir = new Dir(self::TMP_PATH);
         $dir->setPath(self::TMP_PATH . '/test.dir');
 
+        $this->assertEquals(self::TMP_PATH . '/test.dir', $dir->getPath());
         $this->assertTrue($dir->isDir());
     }
 
