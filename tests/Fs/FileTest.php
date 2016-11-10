@@ -248,6 +248,17 @@ class FileTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('Written!', file_get_contents(self::TMP_PATH . '/contents.txt'));
     }
 
+    public function testSaveNew()
+    {
+        $file = new File(self::TMP_PATH . '/new.contents.txt');
+        $file->setContents('Written!');
+        $file->save();
+
+        $this->assertEquals('Written!', file_get_contents(self::TMP_PATH . '/new.contents.txt'));
+
+        unlink(self::TMP_PATH . '/new.contents.txt');
+    }
+
     /**
      * @expectedException \Running\Fs\Exception
      * @expectedExceptionCode 1
