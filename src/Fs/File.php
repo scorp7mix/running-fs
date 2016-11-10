@@ -2,6 +2,8 @@
 
 namespace Running\Fs;
 
+use Running\Core\ICanStoreSelf;
+
 /**
  * File mapper
  *
@@ -9,6 +11,7 @@ namespace Running\Fs;
  * @package Running\Fs
  */
 class File
+    implements ICanStoreSelf
 {
 
     /**
@@ -138,6 +141,15 @@ class File
         }
         $this->contents = file_get_contents($this->path);
         return $this;
+    }
+
+    /**
+     * @return $this
+     * @throws \Running\Fs\Exception
+     */
+    public function reload()
+    {
+        return $this->load();
     }
 
     /**

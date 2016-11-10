@@ -194,6 +194,17 @@ class FileTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('Hello, world!', $file->getContents());
     }
 
+    public function testReLoad()
+    {
+        $file = new File(self::TMP_PATH . '/contents.txt');
+        $file->load();
+
+        $file->setContents('Wrong contents');
+        $file->reload();
+
+        $this->assertEquals('Hello, world!', $file->getContents());
+    }
+
     /**
      * @expectedException \Running\Fs\Exception
      * @expectedExceptionCode 1
