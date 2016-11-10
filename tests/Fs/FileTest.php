@@ -149,7 +149,7 @@ class FileTest extends \PHPUnit_Framework_TestCase
     {
         $file = new File();
         $file->load();
-        $this->assertTrue(false);
+        $this->fail();
     }
 
     /**
@@ -160,7 +160,7 @@ class FileTest extends \PHPUnit_Framework_TestCase
     {
         $file = new File(self::TMP_PATH . '/not.exists');
         $file->load();
-        $this->assertTrue(false);
+        $this->fail();
     }
 
     public function testLoadNotReadable()
@@ -169,7 +169,7 @@ class FileTest extends \PHPUnit_Framework_TestCase
             try {
                 $file = new File(self::TMP_PATH . '/not.readable.txt');
                 $file->load();
-                $this->assertTrue(false);
+                $this->fail();
             } catch (Exception $e) {
                 $this->assertEquals(3, $e->getCode());
             }
@@ -184,7 +184,7 @@ class FileTest extends \PHPUnit_Framework_TestCase
     {
         $file = new File(self::TMP_PATH . '/test.dir');
         $file->load();
-        $this->assertTrue(false);
+        $this->fail();
     }
 
     public function testLoad()
@@ -202,7 +202,7 @@ class FileTest extends \PHPUnit_Framework_TestCase
     {
         $file = new File();
         $file->save();
-        $this->assertTrue(false);
+        $this->fail();
     }
 
     /**
@@ -213,7 +213,7 @@ class FileTest extends \PHPUnit_Framework_TestCase
     {
         $file = new File(self::TMP_PATH . '/not.exists');
         $file->save();
-        $this->assertTrue(false);
+        $this->fail();
     }
 
     public function testSaveNotWriteable()
@@ -222,7 +222,7 @@ class FileTest extends \PHPUnit_Framework_TestCase
             try {
                 $file = new File(self::TMP_PATH . '/not.writable.txt');
                 $file->save();
-                $this->assertTrue(false);
+                $this->fail();
             } catch (Exception $e) {
                 $this->assertEquals(4, $e->getCode());
             }
@@ -237,7 +237,7 @@ class FileTest extends \PHPUnit_Framework_TestCase
     {
         $file = new File(self::TMP_PATH . '/test.dir');
         $file->save();
-        $this->assertTrue(false);
+        $this->fail();
     }
 
     public function testSave()
@@ -256,7 +256,7 @@ class FileTest extends \PHPUnit_Framework_TestCase
     {
         $file = new File();
         $file->return();
-        $this->assertTrue(false);
+        $this->fail();
     }
 
     /**
@@ -267,7 +267,7 @@ class FileTest extends \PHPUnit_Framework_TestCase
     {
         $file = new File(self::TMP_PATH . '/not.exists');
         $file->return();
-        $this->assertTrue(false);
+        $this->fail();
     }
 
     public function testReturnNotReadable()
@@ -276,7 +276,7 @@ class FileTest extends \PHPUnit_Framework_TestCase
             try {
                 $file = new File(self::TMP_PATH . '/not.readable.txt');
                 $file->return();
-                $this->assertTrue(false);
+                $this->fail();
             } catch (Exception $e) {
                 $this->assertEquals(3, $e->getCode());
             }
@@ -291,7 +291,7 @@ class FileTest extends \PHPUnit_Framework_TestCase
     {
         $file = new File(self::TMP_PATH . '/test.dir');
         $file->return();
-        $this->assertTrue(false);
+        $this->fail();
     }
 
     public function testReturn()
