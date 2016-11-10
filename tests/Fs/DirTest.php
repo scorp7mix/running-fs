@@ -3,7 +3,6 @@
 namespace Running\tests\Fs\Dir;
 
 use Running\Core\Collection;
-use Running\Fs\Exception;
 use Running\Fs\Dir;
 use Running\Fs\File;
 
@@ -20,43 +19,62 @@ class DirTest extends \PHPUnit_Framework_TestCase
         file_put_contents(self::TMP_PATH . '/test.dir/test2.txt', 'Hello, world!');
     }
 
-    public function testConstruct()
+    /**
+     * @expectedException \Running\Fs\Exception
+     * @expectedExceptionCode 12
+     */
+    public function testSave()
     {
         $dir = new Dir(self::TMP_PATH);
-
-        $this->assertInstanceOf(Dir::class, $dir);
-        $this->assertEquals(self::TMP_PATH, $dir->getPath());
+        $dir->save();
     }
 
-    public function testSetPath()
+    /**
+     * @expectedException \Running\Fs\Exception
+     * @expectedExceptionCode 1
+     */
+    public function testMakeWithEmptyPath()
     {
-        $dir = new Dir(self::TMP_PATH);
-        $dir->setPath(self::TMP_PATH . '/test.dir');
+        $dir = new Dir();
+        $dir->make();
+    }
 
-        $this->assertEquals(self::TMP_PATH . '/test.dir', $dir->getPath());
+    /**
+     * @expectedException \Running\Fs\Exception
+     * @expectedExceptionCode 13
+     */
+    public function testMakeWithIncorrectPath()
+    {
+        $dir = new Dir(self::TMP_PATH . '/test".dir');
+        $dir->make();
+    }
+
+    public function testMake()
+    {
+        $dir = new Dir(self::TMP_PATH . '/new.dir');
+        $dir->make();
         $this->assertTrue($dir->isDir());
+        rmdir(self::TMP_PATH . '/new.dir');
+    }
+
+    /**
+     * @expectedException \Running\Fs\Exception
+     * @expectedExceptionCode 1
+     */
+    public function testListWithEmptyPath()
+    {
+        $dir = new Dir();
+        $dir->list();
     }
 
     /**
      * @expectedException \Running\Fs\Exception
      * @expectedExceptionCode 11
      */
-    public function testConstructPathIsDir()
+    public function testListWithIncorrectPath()
     {
         $dir = new Dir(self::TMP_PATH . '/test1.txt');
-        $this->assertFalse($dir->isDir());
-    }
-
-    /**
-     * @expectedException \Running\Fs\Exception
-     * @expectedExceptionCode 11
-     */
-    public function testSetPathIsDir()
-    {
-        $dir = new Dir(self::TMP_PATH);
-
-        $dir->setPath(self::TMP_PATH . '/test1.txt');
-        $this->assertFalse($dir->isDir());
+        $dir->list();
     }
 
     public function testList()
