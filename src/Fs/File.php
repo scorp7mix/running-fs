@@ -182,16 +182,13 @@ class File
         if (empty($this->path)) {
             throw new Exception('Empty file path', self::ERRORS['EMPTY_PATH']);
         }
-        if (!file_exists($this->path)) {
-            throw new Exception('File does not exists', self::ERRORS['FILE_NOT_EXISTS']);
-        }
-        if ($this->isDir()) {
+        if (file_exists($this->path) && is_dir($this->path)) {
             throw new Exception('Path is dir instead of file', self::ERRORS['FILE_IS_DIR']);
         }
-        if (!is_writable($this->path)) {
+        $res = @file_put_contents($this->path, $this->contents);
+        if (false === $res) {
             throw new Exception('File is not writeable', self::ERRORS['FILE_NOT_WRITEABLE']);
         }
-        file_put_contents($this->path, $this->contents);
         return $this;
     }
 

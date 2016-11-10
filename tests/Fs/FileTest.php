@@ -216,17 +216,6 @@ class FileTest extends \PHPUnit_Framework_TestCase
         $this->fail();
     }
 
-    /**
-     * @expectedException \Running\Fs\Exception
-     * @expectedExceptionCode 2
-     */
-    public function testSaveNotExists()
-    {
-        $file = new File(self::TMP_PATH . '/not.exists');
-        $file->save();
-        $this->fail();
-    }
-
     public function testSaveNotWriteable()
     {
         if (PHP_OS != 'WINNT') {
