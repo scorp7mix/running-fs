@@ -15,7 +15,7 @@ class Dir
 {
 
     /** Error codes */
-    const DIR_ERRORS = [
+    const ERRORS = parent::ERRORS + [
         'PATH_NOT_DIR'     => 11,
         'SAVE_NOT_FOR_DIR' => 12,
         'MAKE_ERROR'       => 13,
@@ -23,7 +23,7 @@ class Dir
 
     public function save()
     {
-        throw new Exception('Directory cannot be saved', self::DIR_ERRORS['SAVE_NOT_FOR_DIR']);
+        throw new Exception('Directory cannot be saved', self::ERRORS['SAVE_NOT_FOR_DIR']);
     }
 
     /**
@@ -43,7 +43,7 @@ class Dir
             $result = false;
         }
         if (false === $result) {
-            throw new Exception('Cannot make directory: ' . $this->path, self::DIR_ERRORS['MAKE_ERROR']);
+            throw new Exception('Cannot make directory: ' . $this->path, self::ERRORS['MAKE_ERROR']);
         }
         return $this;
     }
@@ -59,7 +59,7 @@ class Dir
             throw new Exception('Empty directory path', self::ERRORS['EMPTY_PATH']);
         }
         if (!$this->isDir()) {
-            throw new Exception('No such directory: ' . $this->path, self::DIR_ERRORS['PATH_NOT_DIR']);
+            throw new Exception('No such directory: ' . $this->path, self::ERRORS['PATH_NOT_DIR']);
         }
 
         $list = new Collection();
