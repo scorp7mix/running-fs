@@ -28,8 +28,13 @@ class File
     /** @var string|null $path */
     protected $path = null;
 
-    /** @var string|null $contents */
+    /** @var mixed $contents */
     protected $contents = null;
+
+    protected $isNew = true;
+    protected $wasNew = true;
+    protected $isChanged = false;
+    protected $isDeleted = false;
 
     /**
      * @param string|null $path
@@ -57,23 +62,6 @@ class File
     public function getPath(): string
     {
         return $this->path;
-    }
-
-    /**
-     * @return string|null
-     */
-    public function getContents()/* : string|null */
-    {
-        return $this->contents;
-    }
-
-    /**
-     * @param string|null $contents
-     * @return $this
-     */
-    public function setContents(string $contents = null) {
-        $this->contents = $contents;
-        return $this;
     }
 
     /**
@@ -122,6 +110,47 @@ class File
     }
 
     /**
+     * @return mixed
+     * @throws \Running\Fs\Exception
+     */
+    /*
+    public function return()
+    {
+        if (empty($this->path)) {
+            throw new Exception('Empty file path', self::ERRORS['EMPTY_PATH']);
+        }
+        if (!file_exists($this->path)) {
+            throw new Exception('File does not exists', self::ERRORS['FILE_NOT_EXISTS']);
+        }
+        if ($this->isDir()) {
+            throw new Exception('Path is dir instead of file', self::ERRORS['FILE_IS_DIR']);
+        }
+        if (!is_readable($this->path)) {
+            throw new Exception('File is not readable', self::ERRORS['FILE_NOT_READABLE']);
+        }
+        return include $this->path;
+    }
+    */
+
+    /**
+     * @param mixed $value
+     * @return $this
+     */
+    public function set($value)
+    {
+        $this->contents = $value;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function get()
+    {
+        return $this->contents;
+    }
+
+    /**
      * @return $this
      * @throws \Running\Fs\Exception
      */
@@ -139,7 +168,20 @@ class File
         if (!is_readable($this->path)) {
             throw new Exception('File is not readable', self::ERRORS['FILE_NOT_READABLE']);
         }
-        $this->contents = file_get_contents($this->path);
+
+        $contents = file_get_contents($this->path);
+        if (serialize(false) == $contents) {
+            $this->contents = false;
+        } elseif (false !== ($data = @unserialize($contents))) {
+            $this->contents = $data;
+        } else {
+            $this->contents = $contents;
+        }
+
+        $this->isNew = false;
+        $this->isChanged = false;
+        $this->isDeleted = false;
+
         return $this;
     }
 
@@ -150,27 +192,6 @@ class File
     public function reload()
     {
         return $this->load();
-    }
-
-    /**
-     * @return mixed
-     * @throws \Running\Fs\Exception
-     */
-    public function return()
-    {
-        if (empty($this->path)) {
-            throw new Exception('Empty file path', self::ERRORS['EMPTY_PATH']);
-        }
-        if (!file_exists($this->path)) {
-            throw new Exception('File does not exists', self::ERRORS['FILE_NOT_EXISTS']);
-        }
-        if ($this->isDir()) {
-            throw new Exception('Path is dir instead of file', self::ERRORS['FILE_IS_DIR']);
-        }
-        if (!is_readable($this->path)) {
-            throw new Exception('File is not readable', self::ERRORS['FILE_NOT_READABLE']);
-        }
-        return include $this->path;
     }
 
     /**
@@ -185,11 +206,49 @@ class File
         if (file_exists($this->path) && is_dir($this->path)) {
             throw new Exception('Path is dir instead of file', self::ERRORS['FILE_IS_DIR']);
         }
-        $res = @file_put_contents($this->path, $this->contents);
+
+        $res = @file_put_contents($this->path, is_string($this->contents) ? $this->contents : serialize($this->contents));
         if (false === $res) {
             throw new Exception('File is not writeable', self::ERRORS['FILE_NOT_WRITEABLE']);
         }
         return $this;
+    }
+
+    public function delete()
+    {
+        // TODO: Implement delete() method.
+    }
+
+    /**
+     * @return bool
+     */
+    public function isNew(): bool
+    {
+        return $this->isNew;
+    }
+
+    /**
+     * @return bool
+     */
+    public function wasNew(): bool
+    {
+        return $this->wasNew;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isChanged(): bool
+    {
+        return $this->isChanged;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isDeleted(): bool
+    {
+        return $this->isDeleted;
     }
 
 }
