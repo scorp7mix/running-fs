@@ -18,12 +18,13 @@ class File
      * Error codes
      */
     const ERRORS = [
-        'EMPTY_PATH'            => 1,
-        'FILE_NOT_EXISTS'       => 2,
-        'FILE_NOT_READABLE'     => 3,
-        'FILE_NOT_WRITEABLE'    => 4,
-        'FILE_NOT_DELETABLE'    => 5,
-        'FILE_IS_DIR'           => 6,
+        'EMPTY_PATH'             => 1,
+        'FILE_NOT_EXISTS'        => 2,
+        'FILE_NOT_READABLE'      => 3,
+        'FILE_NOT_WRITEABLE'     => 4,
+        'FILE_NOT_DELETABLE'     => 5,
+        'FILE_IS_DIR'            => 6,
+        'FILE_DESERIALIZE_ERROR' => 7,
     ];
 
     /** @var string|null $path */
@@ -125,29 +126,6 @@ class File
         }
         return is_link($this->path);
     }
-
-    /**
-     * @return mixed
-     * @throws \Running\Fs\Exception
-     */
-    /*
-    public function return()
-    {
-        if (empty($this->path)) {
-            throw new Exception('Empty file path', self::ERRORS['EMPTY_PATH']);
-        }
-        if (!file_exists($this->path)) {
-            throw new Exception('File does not exists', self::ERRORS['FILE_NOT_EXISTS']);
-        }
-        if ($this->isDir()) {
-            throw new Exception('Path is dir instead of file', self::ERRORS['FILE_IS_DIR']);
-        }
-        if (!is_readable($this->path)) {
-            throw new Exception('File is not readable', self::ERRORS['FILE_NOT_READABLE']);
-        }
-        return include $this->path;
-    }
-    */
 
     /**
      * @param mixed $value
