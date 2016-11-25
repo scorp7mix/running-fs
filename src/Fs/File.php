@@ -180,7 +180,7 @@ class File
         if (!file_exists($this->path)) {
             throw new Exception('File does not exists', self::ERRORS['FILE_NOT_EXISTS']);
         }
-        if ($this->isDir()) {
+        if (is_dir($this->path)) {
             throw new Exception('Path is dir instead of file', self::ERRORS['FILE_IS_DIR']);
         }
         if (!is_readable($this->path)) {
@@ -248,7 +248,7 @@ class File
         if (!file_exists($this->path)) {
             throw new Exception('File does not exists', self::ERRORS['FILE_NOT_EXISTS']);
         }
-        if ($this->isDir()) {
+        if (is_dir($this->path)) {
             throw new Exception('Path is dir instead of file', self::ERRORS['FILE_IS_DIR']);
         }
 
