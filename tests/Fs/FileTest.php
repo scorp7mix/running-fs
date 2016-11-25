@@ -68,6 +68,16 @@ class FileTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(self::TMP_PATH . '/test.txt', $file->getPath());
     }
 
+    /**
+     * @expectedException \Running\Fs\Exception
+     * @expectedExceptionCode 1
+     */
+    public function testExistsEmpty()
+    {
+        $file = new File();
+        $this->assertFalse($file->exists());
+    }
+
     public function testExists()
     {
         $file = new File(self::TMP_PATH . '/test.txt');
