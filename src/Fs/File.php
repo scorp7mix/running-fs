@@ -22,7 +22,8 @@ class File
         'FILE_NOT_EXISTS'       => 2,
         'FILE_NOT_READABLE'     => 3,
         'FILE_NOT_WRITEABLE'    => 4,
-        'FILE_IS_DIR'           => 5,
+        'FILE_NOT_DELETABLE'    => 5,
+        'FILE_IS_DIR'           => 6,
     ];
 
     /** @var string|null $path */
@@ -43,6 +44,10 @@ class File
     {
         if (!empty($path)) {
             $this->setPath($path);
+            if ($this->exists()) {
+                $this->isNew = false;
+                $this->wasNew = false;
+            }
         }
     }
 
@@ -62,6 +67,18 @@ class File
     public function getPath(): string
     {
         return $this->path;
+    }
+
+    /**
+     * @return bool
+     * @throws \Running\Fs\Exception
+     */
+    public function exists(): bool
+    {
+        if (empty($this->path)) {
+            throw new Exception('Empty file path', self::ERRORS['EMPTY_PATH']);
+        }
+        return file_exists($this->path);
     }
 
     /**
@@ -139,6 +156,7 @@ class File
     public function set($value)
     {
         $this->contents = $value;
+        $this->isChanged = true;
         return $this;
     }
 
@@ -179,6 +197,7 @@ class File
         }
 
         $this->isNew = false;
+        $this->wasNew = false;
         $this->isChanged = false;
         $this->isDeleted = false;
 
@@ -211,12 +230,36 @@ class File
         if (false === $res) {
             throw new Exception('File is not writeable', self::ERRORS['FILE_NOT_WRITEABLE']);
         }
+
+        $this->isChanged = false;
+        if ($this->isNew) {
+            $this->isNew = false;
+            $this->wasNew = true;
+        }
+
         return $this;
     }
 
     public function delete()
     {
-        // TODO: Implement delete() method.
+        if (empty($this->path)) {
+            throw new Exception('Empty file path', self::ERRORS['EMPTY_PATH']);
+        }
+        if (!file_exists($this->path)) {
+            throw new Exception('File does not exists', self::ERRORS['FILE_NOT_EXISTS']);
+        }
+        if ($this->isDir()) {
+            throw new Exception('Path is dir instead of file', self::ERRORS['FILE_IS_DIR']);
+        }
+
+        $res = @unlink($this->path);
+        if (false === $res) {
+            throw new Exception('File is not deletable', self::ERRORS['FILE_NOT_DELETABLE']);
+        }
+
+        $this->isDeleted = true;
+
+        return $this;
     }
 
     /**
