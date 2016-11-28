@@ -35,9 +35,11 @@ trait FileTestDelete
         if (PHP_OS != 'WINNT') {
             try {
                 $file = new File(self::TMP_PATH . '/not.writable.txt');
+                chmod(self::TMP_PATH, 0555);
                 $file->delete();
                 $this->fail();
             } catch (Exception $e) {
+                chmod(self::TMP_PATH, 0777);
                 $this->assertEquals(File::ERRORS['FILE_NOT_DELETABLE'], $e->getCode());
             }
         }
