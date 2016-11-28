@@ -214,6 +214,7 @@ class File
             $this->isNew = false;
             $this->wasNew = true;
         }
+        $this->isDeleted = false;
 
         return $this;
     }

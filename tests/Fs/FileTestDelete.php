@@ -73,6 +73,17 @@ trait FileTestDelete
         $this->assertTrue($file->wasNew());
         $this->assertFalse($file->isChanged());
         $this->assertTrue($file->isDeleted());
+
+        $file->save();
+
+        $this->assertTrue($file->exists());
+
+        $this->assertFalse($file->isNew());
+        $this->assertTrue($file->wasNew());
+        $this->assertFalse($file->isChanged());
+        $this->assertFalse($file->isDeleted());
+
+        unlink(self::TMP_PATH . '/new.contents.txt');
     }
 
 }
