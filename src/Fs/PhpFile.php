@@ -70,6 +70,7 @@ class PhpFile
             $this->isNew = false;
             $this->wasNew = true;
         }
+        $this->isDeleted = false;
 
         return $this;
     }
