@@ -2,7 +2,7 @@
 
 namespace Running\Fs;
 
-use Running\Core\ICanStoreSelf;
+use Running\Core\IStorage;
 
 /**
  * File mapper
@@ -11,7 +11,7 @@ use Running\Core\ICanStoreSelf;
  * @package Running\Fs
  */
 class File
-    implements ICanStoreSelf
+    implements IStorage
 {
 
     /**
