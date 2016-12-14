@@ -8,3 +8,6 @@ install:
   - composer install
 
 script: phpunit --configuration tests/phpunit.xml
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)

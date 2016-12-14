@@ -5,16 +5,25 @@ namespace Running\tests\Fs\File;
 use Running\Fs\Exception;
 use Running\Fs\File;
 
+require_once __DIR__ . '/FileTestLoad.php';
+require_once __DIR__ . '/FileTestSave.php';
+require_once __DIR__ . '/FileTestDelete.php';
+
 class FileTest extends \PHPUnit_Framework_TestCase
 {
 
     const TMP_PATH = __DIR__ . '/tmp';
+
+    use FileTestLoad;
+    use FileTestSave;
+    use FileTestDelete;
 
     protected function setUp()
     {
         mkdir(self::TMP_PATH, 0777);
         mkdir(self::TMP_PATH . '/test.dir', 0777);
         file_put_contents(self::TMP_PATH . '/contents.txt', 'Hello, world!');
+        file_put_contents(self::TMP_PATH . '/contents.serialized.txt', serialize([1, 2, 3]));
         if (PHP_OS != 'WINNT') {
             file_put_contents(self::TMP_PATH . '/not.readable.txt', 'Hello, not readable file!');
             chmod(self::TMP_PATH . '/not.readable.txt', 0000);
@@ -22,7 +31,6 @@ class FileTest extends \PHPUnit_Framework_TestCase
             chmod(self::TMP_PATH . '/not.writable.txt', 0000);
         }
         symlink(self::TMP_PATH . '/contents.txt', self::TMP_PATH . '/contents.lnk');
-        file_put_contents(self::TMP_PATH . '/return.php', '<?php return 42;');
     }
 
     public function testConstruct()
@@ -30,11 +38,26 @@ class FileTest extends \PHPUnit_Framework_TestCase
         $file = new File();
 
         $this->assertInstanceOf(File::class, $file);
+        $this->assertTrue($file->isNew());
+        $this->assertTrue($file->wasNew());
+        $this->assertFalse($file->isChanged());
+        $this->assertFalse($file->isDeleted());
 
         $file = new File(self::TMP_PATH . '/test.txt');
 
         $this->assertInstanceOf(File::class, $file);
         $this->assertEquals(self::TMP_PATH . '/test.txt', $file->getPath());
+        $this->assertTrue($file->isNew());
+        $this->assertTrue($file->wasNew());
+        $this->assertFalse($file->isChanged());
+        $this->assertFalse($file->isDeleted());
+
+        $file = new File(self::TMP_PATH . '/contents.txt');
+        $this->assertEquals(self::TMP_PATH . '/contents.txt', $file->getPath());
+        $this->assertFalse($file->isNew());
+        $this->assertFalse($file->wasNew());
+        $this->assertFalse($file->isChanged());
+        $this->assertFalse($file->isDeleted());
     }
 
     public function testGetSetPath()
@@ -45,13 +68,35 @@ class FileTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(self::TMP_PATH . '/test.txt', $file->getPath());
     }
 
-    public function testGetSetContents()
+    /**
+     * @expectedException \Running\Fs\Exception
+     * @expectedExceptionCode 1
+     */
+    public function testExistsEmpty()
     {
         $file = new File();
-        $this->assertNull($file->getContents());
+        $this->assertFalse($file->exists());
+    }
 
-        $file->setContents('Hello!');
-        $this->assertEquals('Hello!', $file->getContents());
+    public function testExists()
+    {
+        $file = new File(self::TMP_PATH . '/test.txt');
+        $this->assertFalse($file->exists());
+
+        $file = new File(self::TMP_PATH . '/contents.txt');
+        $this->assertTrue($file->exists());
+    }
+
+    public function testGetSet()
+    {
+        $file = new File();
+        $this->assertNull($file->get());
+
+        $file->set('Hello!');
+        $this->assertEquals('Hello!', $file->get());
+
+        $file->set([1, 2, 3]);
+        $this->assertEquals([1, 2, 3], $file->get());
     }
 
     /**
@@ -140,169 +185,9 @@ class FileTest extends \PHPUnit_Framework_TestCase
         $file = new File(self::TMP_PATH . '/contents.txt');
         $this->assertFalse($file->isLink());
     }
-
-    /**
-     * @expectedException \Running\Fs\Exception
-     * @expectedExceptionCode 1
-     */
-    public function testLoadEmpty()
-    {
-        $file = new File();
-        $file->load();
-        $this->assertTrue(false);
-    }
-
-    /**
-     * @expectedException \Running\Fs\Exception
-     * @expectedExceptionCode 2
-     */
-    public function testLoadNotExists()
-    {
-        $file = new File(self::TMP_PATH . '/not.exists');
-        $file->load();
-        $this->assertTrue(false);
-    }
-
-    public function testLoadNotReadable()
-    {
-        if (PHP_OS != 'WINNT') {
-            try {
-                $file = new File(self::TMP_PATH . '/not.readable.txt');
-                $file->load();
-                $this->assertTrue(false);
-            } catch (Exception $e) {
-                $this->assertEquals(3, $e->getCode());
-            }
-        }
-    }
-
-    /**
-     * @expectedException \Running\Fs\Exception
-     * @expectedExceptionCode 5
-     */
-    public function testLoadIsDir()
-    {
-        $file = new File(self::TMP_PATH . '/test.dir');
-        $file->load();
-        $this->assertTrue(false);
-    }
-
-    public function testLoad()
-    {
-        $file = new File(self::TMP_PATH . '/contents.txt');
-        $file->load();
-        $this->assertEquals('Hello, world!', $file->getContents());
-    }
-
-    /**
-     * @expectedException \Running\Fs\Exception
-     * @expectedExceptionCode 1
-     */
-    public function testSaveEmpty()
-    {
-        $file = new File();
-        $file->save();
-        $this->assertTrue(false);
-    }
-
-    /**
-     * @expectedException \Running\Fs\Exception
-     * @expectedExceptionCode 2
-     */
-    public function testSaveNotExists()
-    {
-        $file = new File(self::TMP_PATH . '/not.exists');
-        $file->save();
-        $this->assertTrue(false);
-    }
-
-    public function testSaveNotWriteable()
-    {
-        if (PHP_OS != 'WINNT') {
-            try {
-                $file = new File(self::TMP_PATH . '/not.writable.txt');
-                $file->save();
-                $this->assertTrue(false);
-            } catch (Exception $e) {
-                $this->assertEquals(4, $e->getCode());
-            }
-        }
-    }
-
-    /**
-     * @expectedException \Running\Fs\Exception
-     * @expectedExceptionCode 5
-     */
-    public function testSaveIsDir()
-    {
-        $file = new File(self::TMP_PATH . '/test.dir');
-        $file->save();
-        $this->assertTrue(false);
-    }
-
-    public function testSave()
-    {
-        $file = new File(self::TMP_PATH . '/contents.txt');
-        $file->setContents('Written!');
-        $file->save();
-        $this->assertEquals('Written!', file_get_contents(self::TMP_PATH . '/contents.txt'));
-    }
-
-    /**
-     * @expectedException \Running\Fs\Exception
-     * @expectedExceptionCode 1
-     */
-    public function testReturnEmpty()
-    {
-        $file = new File();
-        $file->return();
-        $this->assertTrue(false);
-    }
-
-    /**
-     * @expectedException \Running\Fs\Exception
-     * @expectedExceptionCode 2
-     */
-    public function testReturnNotExists()
-    {
-        $file = new File(self::TMP_PATH . '/not.exists');
-        $file->return();
-        $this->assertTrue(false);
-    }
-
-    public function testReturnNotReadable()
-    {
-        if (PHP_OS != 'WINNT') {
-            try {
-                $file = new File(self::TMP_PATH . '/not.readable.txt');
-                $file->return();
-                $this->assertTrue(false);
-            } catch (Exception $e) {
-                $this->assertEquals(3, $e->getCode());
-            }
-        }
-    }
-
-    /**
-     * @expectedException \Running\Fs\Exception
-     * @expectedExceptionCode 5
-     */
-    public function testReturnIsDir()
-    {
-        $file = new File(self::TMP_PATH . '/test.dir');
-        $file->return();
-        $this->assertTrue(false);
-    }
-
-    public function testReturn()
-    {
-        $file = new File(self::TMP_PATH . '/return.php');
-        $this->assertEquals(42, $file->return());
-    }
-
+    
     protected function tearDown()
     {
-        unlink(self::TMP_PATH . '/return.php');
         unlink(self::TMP_PATH . '/contents.lnk');
         if (PHP_OS != 'WINNT') {
             chmod(self::TMP_PATH . '/not.writable.txt', 0777);
@@ -310,6 +195,7 @@ class FileTest extends \PHPUnit_Framework_TestCase
             chmod(self::TMP_PATH . '/not.readable.txt', 0777);
             unlink(self::TMP_PATH . '/not.readable.txt');
         }
+        unlink(self::TMP_PATH . '/contents.serialized.txt');
         unlink(self::TMP_PATH . '/contents.txt');
         rmdir(self::TMP_PATH . '/test.dir');
         rmdir(self::TMP_PATH);

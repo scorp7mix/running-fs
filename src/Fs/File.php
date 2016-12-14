@@ -2,6 +2,8 @@
 
 namespace Running\Fs;
 
+use Running\Core\IStorage;
+
 /**
  * File mapper
  *
@@ -9,24 +11,32 @@ namespace Running\Fs;
  * @package Running\Fs
  */
 class File
+    implements IStorage
 {
 
     /**
      * Error codes
      */
     const ERRORS = [
-        'EMPTY_PATH'            => 1,
-        'FILE_NOT_EXISTS'       => 2,
-        'FILE_NOT_READABLE'     => 3,
-        'FILE_NOT_WRITEABLE'    => 4,
-        'FILE_IS_DIR'           => 5,
+        'EMPTY_PATH'             => 1,
+        'FILE_NOT_EXISTS'        => 2,
+        'FILE_NOT_READABLE'      => 3,
+        'FILE_NOT_WRITEABLE'     => 4,
+        'FILE_NOT_DELETABLE'     => 5,
+        'FILE_IS_DIR'            => 6,
+        'FILE_DESERIALIZE_ERROR' => 7,
     ];
 
     /** @var string|null $path */
     protected $path = null;
 
-    /** @var string|null $contents */
+    /** @var mixed $contents */
     protected $contents = null;
+
+    protected $isNew = true;
+    protected $wasNew = true;
+    protected $isChanged = false;
+    protected $isDeleted = false;
 
     /**
      * @param string|null $path
@@ -35,6 +45,10 @@ class File
     {
         if (!empty($path)) {
             $this->setPath($path);
+            if ($this->exists()) {
+                $this->isNew = false;
+                $this->wasNew = false;
+            }
         }
     }
 
@@ -57,20 +71,15 @@ class File
     }
 
     /**
-     * @return string|null
+     * @return bool
+     * @throws \Running\Fs\Exception
      */
-    public function getContents()/* : string|null */
+    public function exists(): bool
     {
-        return $this->contents;
-    }
-
-    /**
-     * @param string|null $contents
-     * @return $this
-     */
-    public function setContents(string $contents = null) {
-        $this->contents = $contents;
-        return $this;
+        if (empty($this->path)) {
+            throw new Exception('Empty file path', self::ERRORS['EMPTY_PATH']);
+        }
+        return file_exists($this->path);
     }
 
     /**
@@ -119,6 +128,25 @@ class File
     }
 
     /**
+     * @param mixed $value
+     * @return $this
+     */
+    public function set($value)
+    {
+        $this->contents = $value;
+        $this->isChanged = true;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function get()
+    {
+        return $this->contents;
+    }
+
+    /**
      * @return $this
      * @throws \Running\Fs\Exception
      */
@@ -130,35 +158,37 @@ class File
         if (!file_exists($this->path)) {
             throw new Exception('File does not exists', self::ERRORS['FILE_NOT_EXISTS']);
         }
-        if ($this->isDir()) {
+        if (is_dir($this->path)) {
             throw new Exception('Path is dir instead of file', self::ERRORS['FILE_IS_DIR']);
         }
         if (!is_readable($this->path)) {
             throw new Exception('File is not readable', self::ERRORS['FILE_NOT_READABLE']);
         }
-        $this->contents = file_get_contents($this->path);
+
+        $contents = file_get_contents($this->path);
+        if (serialize(false) == $contents) {
+            $this->contents = false;
+        } elseif (false !== ($data = @unserialize($contents))) {
+            $this->contents = $data;
+        } else {
+            $this->contents = $contents;
+        }
+
+        $this->isNew = false;
+        $this->wasNew = false;
+        $this->isChanged = false;
+        $this->isDeleted = false;
+
         return $this;
     }
 
     /**
-     * @return mixed
+     * @return $this
      * @throws \Running\Fs\Exception
      */
-    public function return()
+    public function reload()
     {
-        if (empty($this->path)) {
-            throw new Exception('Empty file path', self::ERRORS['EMPTY_PATH']);
-        }
-        if (!file_exists($this->path)) {
-            throw new Exception('File does not exists', self::ERRORS['FILE_NOT_EXISTS']);
-        }
-        if ($this->isDir()) {
-            throw new Exception('Path is dir instead of file', self::ERRORS['FILE_IS_DIR']);
-        }
-        if (!is_readable($this->path)) {
-            throw new Exception('File is not readable', self::ERRORS['FILE_NOT_READABLE']);
-        }
-        return include $this->path;
+        return $this->load();
     }
 
     /**
@@ -170,17 +200,77 @@ class File
         if (empty($this->path)) {
             throw new Exception('Empty file path', self::ERRORS['EMPTY_PATH']);
         }
+        if (file_exists($this->path) && is_dir($this->path)) {
+            throw new Exception('Path is dir instead of file', self::ERRORS['FILE_IS_DIR']);
+        }
+
+        $res = @file_put_contents($this->path, is_string($this->contents) ? $this->contents : serialize($this->contents));
+        if (false === $res) {
+            throw new Exception('File is not writeable', self::ERRORS['FILE_NOT_WRITEABLE']);
+        }
+
+        $this->isChanged = false;
+        if ($this->isNew) {
+            $this->isNew = false;
+            $this->wasNew = true;
+        }
+        $this->isDeleted = false;
+
+        return $this;
+    }
+
+    public function delete()
+    {
+        if (empty($this->path)) {
+            throw new Exception('Empty file path', self::ERRORS['EMPTY_PATH']);
+        }
         if (!file_exists($this->path)) {
             throw new Exception('File does not exists', self::ERRORS['FILE_NOT_EXISTS']);
         }
-        if ($this->isDir()) {
+        if (is_dir($this->path)) {
             throw new Exception('Path is dir instead of file', self::ERRORS['FILE_IS_DIR']);
         }
-        if (!is_writable($this->path)) {
-            throw new Exception('File is not writeable', self::ERRORS['FILE_NOT_WRITEABLE']);
+
+        $res = @unlink($this->path);
+        if (false === $res) {
+            throw new Exception('File is not deletable', self::ERRORS['FILE_NOT_DELETABLE']);
         }
-        file_put_contents($this->path, $this->contents);
+
+        $this->isDeleted = true;
+
         return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isNew(): bool
+    {
+        return $this->isNew;
+    }
+
+    /**
+     * @return bool
+     */
+    public function wasNew(): bool
+    {
+        return $this->wasNew;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isChanged(): bool
+    {
+        return $this->isChanged;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isDeleted(): bool
+    {
+        return $this->isDeleted;
     }
 
 }
