@@ -84,7 +84,7 @@ class Dir
                 continue;
             }
             if ($file->isDir()) {
-                $ret->merge((new self($file->getPath()))->list());
+                $ret->merge((new static($file->getPath()))->list());
             } else {
                 $ret->add($file);
             }
